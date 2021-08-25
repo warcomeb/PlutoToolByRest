@@ -5,11 +5,10 @@ from . import db
 
 api = Namespace('categories', description='Categories related operations')
 
-
 @api.route('/list')
-#@api.description('List of all categories present in the database')
 class CategoriesList(Resource):
     @api.doc('list_categories')
+    #@api.description('List of all categories present in the database')
     #@api.marshal_list_with(cat)
     def get(self):
         conn = db.get_db_connection()
@@ -18,17 +17,19 @@ class CategoriesList(Resource):
         payload = []
         content = {}
         for result in categories:
-            content = {'id': result[0], 'name': result[1], 'desciption': result[2], 'type': result[3]}
+            content = {'id': result[0], 'name': result[1], 'desciption': result[2]}
             payload.append(content)
             content = {}
         return jsonify(payload)
 
 @api.route('/', methods=["POST", "GET"])
-#@api.param('id', 'The category identifier')
-@api.response(404, 'Category not found')
 class Category(Resource):
     #@api.marshal_with(cat)
     @api.doc('get_category')
+    @api.response(200, 'Category found')
+    @api.response(404, 'Category not found')
+    @api.param('id', 'The category identifier')
+    @api.param('name', 'The category name')
     def get(self):
         query_parameters = request.args
         id_category = query_parameters.get('id')
@@ -58,11 +59,16 @@ class Category(Resource):
                         "description": res[0][2]
                       }
             return jsonify(category)
+        elif len(res) == 0:
+            print('No elements...')
+            api.abort(404)
         else:
             print('To many elements...')
             api.abort(404)
         
     @api.doc('post_category')
+    @api.response(200, 'New category added')
+    @api.response(400, 'The add request is not well formed.')
     #@api.description("Add new category")
     def post(self):
         if (request.is_json):
@@ -71,7 +77,7 @@ class Category(Resource):
             description = data.get('description','')
             if ((name != None) & (description != None) & (name != "") & (description != "")):
                 conn = db.get_db_connection()
-                res = conn.execute("INSERT INTO category (Id, Name, Description, Type) VALUES (NULL, ?, ?, 'i');",
+                res = conn.execute("INSERT INTO category (Id, Name, Description) VALUES (NULL, ?, ?);",
                                 (name,description)
                                 ).lastrowid
                 conn.commit()
