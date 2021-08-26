@@ -37,9 +37,6 @@ class SubCategory(Resource):
             query += ' s.CategoryId=? AND'
             to_filter.append(id_category)
 
-        #if not (id_scategory or name_scategory or id_category):
-        #    api.abort(404)
-
         if (id_scategory or name_scategory or id_category):
             query = query[:-4] + ';'
         print(query)
@@ -74,12 +71,39 @@ class SubCategory(Resource):
     @api.doc('post_subcategory')
     @api.response(200, 'New subcategory added')
     @api.response(400, 'The add request is not well formed.')
+    @api.response(404, 'The parent category is not found.')
     def post(self):
         if (request.is_json):
             data = request.get_json()
             name = data.get('name','')
             description = data.get('description','')
             categoryId = data.get('categoryId','')
+
+            if (categoryId != None) & (categoryId != ""):
+                conn = db.get_db_connection()
+                category = conn.execute('SELECT * FROM category WHERE Id=?',[categoryId]).fetchall()
+                conn.close()
+                if len(category) != 1:
+                    api.abort(404)
+            else:
+                api.abort(400)
+
+            if ((name != None) & (description != None) & (name != "") & (description != "")):
+                conn = db.get_db_connection()
+                res = conn.execute("INSERT INTO subcategory (Id, Name, Description, CategoryId) VALUES (NULL, ?, ?, ?);",
+                                (name,description,categoryId)
+                                ).lastrowid
+                conn.commit()
+                conn.close()
+                subcategory_return = {
+                                    "id" : res,
+                                    "name": name,
+                                    "description": description,
+                                    "categoryId": categoryId
+                                  }
+                return jsonify(subcategory_return)
+            else:
+                api.abort(400)
         else:
             api.abort(400)
 
