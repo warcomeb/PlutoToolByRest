@@ -9,35 +9,35 @@ api = Namespace('payees', description='Payees related operations')
 class Payee(Resource):
     #@api.marshal_with(cat)
     @api.doc('get_subcategory')
-    @api.response(200, 'Subcategory found')
-    @api.response(404, 'Subcategory not found')
-    @api.param('id', 'The subcategory identifier')
-    @api.param('name', 'The subcategory name')
-    @api.param('categoryId', 'The parent category identifier')
+    @api.response(200, 'Payee found')
+    @api.response(404, 'Payee not found')
+    @api.param('id', 'The payee identifier')
+    @api.param('name', 'The payee name')
+    @api.param('typeId', 'The payee type identifier')
     def get(self):
         query_parameters = request.args
-        id_scategory = query_parameters.get('id')
-        id_category = query_parameters.get('categoryId')
-        name_scategory = query_parameters.get('name')
+        id_payee = query_parameters.get('id')
+        id_payeetype = query_parameters.get('typeId')
+        name_payee = query_parameters.get('name')
         
-        query = 'SELECT s.Id, s.Name, s.Description, c.Id, c.Name FROM subcategory s '
-        query += 'INNER JOIN category c ON c.Id = s.CategoryId'
+        query = 'SELECT p.Id, p.Name, t.Id, t.Name FROM payee p '
+        query += 'INNER JOIN payeetype t ON t.Id = p.PayeeTypeId'
         to_filter = []
 
-        if (id_scategory or name_scategory or id_category):
+        if (id_payee or id_payeetype or name_payee):
             query += ' WHERE'
         
-        if id_scategory:
-            query += ' s.Id=? AND'
-            to_filter.append(id_scategory)
-        if name_scategory:
-            query += ' s.Name=? AND'
-            to_filter.append(name_scategory)
-        if id_category:
-            query += ' s.CategoryId=? AND'
-            to_filter.append(id_category)
+        if id_payee:
+            query += ' p.Id=? AND'
+            to_filter.append(id_payee)
+        if id_payeetype:
+            query += ' p.PayeeTypeId=? AND'
+            to_filter.append(id_payeetype)
+        if name_payee:
+            query += ' p.Name=? AND'
+            to_filter.append(name_payee)
 
-        if (id_scategory or name_scategory or id_category):
+        if (id_payee or id_payeetype or name_payee):
             query = query[:-4] + ';'
         print(query)
         
@@ -46,20 +46,19 @@ class Payee(Resource):
         conn.close()
       
         if len(res) == 1:
-            subcategory = {
+            payee = {
                         "id" : res[0][0],
                         "name": res[0][1],
-                        "description": res[0][2],
-                        "categoryId" : res[0][3],
-                        "categoryName" : res[0][4]
+                        "typeId": res[0][2],
+                        "typeName" : res[0][3]
                       }
-            return jsonify(subcategory)
+            return jsonify(payee)
         elif len(res) > 1:
             payload = []
             content = {}
             
             for result in res:
-                content = {'id': result[0], 'name': result[1], 'description': result[2],  'categoryId': result[3], 'categoryName': result[4]}
+                content = {'id': result[0], 'name': result[1], 'typeId': result[2],  'typeName': result[3]}
                 payload.append(content)
                 content = {}
 
@@ -68,42 +67,13 @@ class Payee(Resource):
             print('No element...')
             api.abort(404)
 
-    @api.doc('post_subcategory')
-    @api.response(200, 'New subcategory added')
+    @api.doc('post_payee')
+    @api.response(200, 'New payee added')
     @api.response(400, 'The add request is not well formed.')
-    @api.response(404, 'The parent category is not found.')
+    @api.response(404, 'The payee type is not found.')
     def post(self):
         if (request.is_json):
-            data = request.get_json()
-            name = data.get('name','')
-            description = data.get('description','')
-            categoryId = data.get('categoryId','')
-
-            if (categoryId != None) & (categoryId != ""):
-                conn = db.get_db_connection()
-                category = conn.execute('SELECT * FROM category WHERE Id=?',[categoryId]).fetchall()
-                conn.close()
-                if len(category) != 1:
-                    api.abort(404)
-            else:
-                api.abort(400)
-
-            if ((name != None) & (description != None) & (name != "") & (description != "")):
-                conn = db.get_db_connection()
-                res = conn.execute("INSERT INTO subcategory (Id, Name, Description, CategoryId) VALUES (NULL, ?, ?, ?);",
-                                (name,description,categoryId)
-                                ).lastrowid
-                conn.commit()
-                conn.close()
-                subcategory_return = {
-                                    "id" : res,
-                                    "name": name,
-                                    "description": description,
-                                    "categoryId": categoryId
-                                  }
-                return jsonify(subcategory_return)
-            else:
-                api.abort(400)
+            api.abort(400)
         else:
             api.abort(400)
 

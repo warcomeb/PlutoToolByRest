@@ -76,3 +76,5 @@ CREATE TABLE payee (
   Active INTEGER(1) DEFAULT '1',
   Note TEXT
 );
+
+INSERT INTO payee (Id, Name, PayeeTypeId, Email, Phone, Address, City, District, ZipCode, Country, VATID, NIN, Active, Note) VALUES (1,  'Undefined', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
