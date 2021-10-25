@@ -20,7 +20,7 @@ class Payee(Resource):
         id_payeetype = query_parameters.get('typeId')
         name_payee = query_parameters.get('name')
         
-        query = 'SELECT p.Id, p.Name, t.Id, t.Name FROM payee p '
+        query = 'SELECT p.Id, p.Name, p.City, t.Id, t.Name FROM payee p '
         query += 'INNER JOIN payeetype t ON t.Id = p.PayeeTypeId'
         to_filter = []
 
@@ -44,21 +44,28 @@ class Payee(Resource):
         conn = db.get_db_connection()
         res = conn.execute(query,to_filter).fetchall()
         conn.close()
-      
+
+        payload = []
+        content = {}
         if len(res) == 1:
-            payee = {
+            content = {
                         "id" : res[0][0],
                         "name": res[0][1],
-                        "typeId": res[0][2],
-                        "typeName" : res[0][3]
+                        "city": res[0][2],
+                        "typeId": res[0][3],
+                        "typeName" : res[0][4]
                       }
-            return jsonify(payee)
+            payload.append(content)
+            return jsonify(payload)
         elif len(res) > 1:
-            payload = []
-            content = {}
+
             
             for result in res:
-                content = {'id': result[0], 'name': result[1], 'typeId': result[2],  'typeName': result[3]}
+                content = {'id': result[0],
+                           'name': result[1],
+                           'city': result[2],
+                           'typeId': result[3],
+                           'typeName': result[4]}
                 payload.append(content)
                 content = {}
 
@@ -72,8 +79,103 @@ class Payee(Resource):
     @api.response(400, 'The add request is not well formed.')
     @api.response(404, 'The payee type is not found.')
     def post(self):
-        if (request.is_json):
-            api.abort(400)
+        if request.is_json:
+            data = request.get_json()
+            name = data.get('name', '')
+            type_id = data.get('typeId', '')
+            email = data.get('email', '')
+            phone = data.get('phone', '')
+            address = data.get('address', '')
+            city = data.get('city', '')
+            district = data.get('district', '')
+            zip_code = data.get('zipCode', '')
+            country = data.get('country', '')
+            VATID = data.get('VATID', '')
+            NIN = data.get('NIN', '')
+            note = data.get('note', '')
+
+            if (type_id != None) and (type_id != ""):
+                conn = db.get_db_connection()
+                type_id_row = conn.execute('SELECT * FROM payeetype WHERE Id=?', [type_id]).fetchall()
+                conn.close()
+                if len(type_id_row) != 1:
+                    api.abort(404)
+
+            if (name != None) and (name != ""):
+                query_string = "INSERT INTO payee (Id, Name, PayeeTypeId, Email, Phone, Address, City, District, ZipCode, Country, VATID, NIN, Active, Note) VALUES (NULL,?,"
+
+                # Add payeetypeid
+                query_string += type_id + ","
+
+                if (email != None) & (email != ""):
+                    query_string += email + ","
+                else:
+                    query_string += "NULL,"
+
+                if (phone != None) & (phone != ""):
+                    query_string += phone + ","
+                else:
+                    query_string += "NULL,"
+
+                if (address != None) & (address != ""):
+                    query_string += address + ","
+                else:
+                    query_string += "NULL,"
+
+                if (city != None) & (city != ""):
+                    query_string += city + ","
+                else:
+                    query_string += "NULL,"
+    
+                if (district != None) & (district != ""):
+                    query_string += district + ","
+                else:
+                    query_string += "NULL,"
+
+                if (zip_code != None) & (zip_code != ""):
+                    query_string += zip_code + ","
+                else:
+                    query_string += "NULL,"
+
+                if (country != None) & (country != ""):
+                    query_string += country + ","
+                else:
+                    query_string += "NULL,"
+
+                if (VATID != None) & (VATID != ""):
+                    query_string += VATID + ","
+                else:
+                    query_string += "NULL,"
+
+                if (NIN != None) & (NIN != ""):
+                    query_string += NIN + ","
+                else:
+                    query_string += "NULL,"
+
+                # The new payees is active!
+                query_string += "1,"
+
+                if (note != None) & (note != ""):
+                    query_string += note
+                else:
+                    query_string += "NULL"
+
+                query_string += ")"
+
+                conn = db.get_db_connection()
+                res = conn.execute(query_string, (name)).lastrowid
+
+                conn.commit()
+                conn.close()
+                payee_return = {
+                                "id": res,
+                                "name": name,
+                                "typeId": type_id
+                               }
+                #print(res)
+                return jsonify(payee_return)
+            else:
+                api.abort(400)
         else:
             api.abort(400)
 

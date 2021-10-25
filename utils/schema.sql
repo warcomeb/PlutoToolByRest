@@ -44,7 +44,7 @@ INSERT INTO payeetype (Id, Name, Description) VALUES (2,  'People', '');
 INSERT INTO payeetype (Id, Name, Description) VALUES (3,  'Bank', '');
 INSERT INTO payeetype (Id, Name, Description) VALUES (4,  'Bar', '');
 INSERT INTO payeetype (Id, Name, Description) VALUES (5,  'Shop', '');
-INSERT INTO payeetype (Id, Name, Description) VALUES (6,  'Resturant', '');
+INSERT INTO payeetype (Id, Name, Description) VALUES (6,  'Restaurant', '');
 INSERT INTO payeetype (Id, Name, Description) VALUES (7,  'Hospital', '');
 INSERT INTO payeetype (Id, Name, Description) VALUES (8,  'Doctor', '');
 INSERT INTO payeetype (Id, Name, Description) VALUES (9,  'Transport', '');
